@@ -129,6 +129,22 @@ class KnowledgeBase(object):
         ####################################################
         # Implementation goes here
         # Not required for the extra credit assignment
+    def explain_helper(self, fact_or_rule, counter):
+        spaces = " " * 4 * counter
+        ret = ""
+        for sup in fact_or_rule.supported_by:
+            ret = ret + spaces + "  SUPPORTED BY\n"
+            if isinstance(sup, Fact):
+                ret = ret + spaces + "fact: " + str(fact_or_rule.statement)
+                if fact_or_rule.asserted:
+                    ret = ret + "ASSERTED"
+                if len(sup.supported_by):
+                    for supp in fact_or_rule.supported_by:
+                        ret = ret + '\n' + self.kb.explain_helper(supp, counter)
+            if isinstance(sup, Rule):
+                ret = ret + spaces + "rule: " + '('
+
+            
 
     def kb_explain(self, fact_or_rule):
         """
@@ -142,8 +158,28 @@ class KnowledgeBase(object):
         """
         ####################################################
         # Student code goes here
-
-
+        ret = ""
+        if isinstance(fact_or_rule, Fact):
+            if fact_or_rule in self.facts:
+                fact = self._get_fact(fact_or_rule)
+                ret = "fact: " + str(fact_or_rule.statement)
+                if fact.asserted:
+                    ret = ret + " ASSERTED"
+                if len(fact_or_rule.supported_by) > 0:
+                    pass
+            else:
+                ret = "Fact is not in the KB"
+        elif isinstance(fact_or_rule, Rule):
+            if fact_or_rule in self.rules:
+                rule = self._get_rule(fact_or_rule)
+                ret = "rule: " + '(' + fact_or_rule.lhs + ')' + " -> " + fact_or_rule.rhs
+                if rule.asserted:
+                    ret = ret + " ASSERTED"
+            else:
+                ret = "Rule is not in the KB"
+        else: 
+            ret = False
+        return ret
 class InferenceEngine(object):
     def fc_infer(self, fact, rule, kb):
         """Forward-chaining to infer new facts and rules
