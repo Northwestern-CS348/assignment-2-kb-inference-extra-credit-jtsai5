@@ -132,9 +132,12 @@ class KnowledgeBase(object):
     
     def make_rule_line(self, rule):
         ret = "rule: " + '('
+        i = 0
         for l in rule.lhs:
-            ret = ret + str(l) + ', '
-        ret = ret[:len(ret)-2]
+            ret = ret + str(l)
+            i = i + 1
+            if i < len(rule.lhs):
+                ret = ret + ', '
         ret = ret + ')' + " -> " + str(rule.rhs)
         return ret
 
