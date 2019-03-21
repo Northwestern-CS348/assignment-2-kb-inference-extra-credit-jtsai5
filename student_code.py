@@ -129,22 +129,36 @@ class KnowledgeBase(object):
         ####################################################
         # Implementation goes here
         # Not required for the extra credit assignment
-    def explain_helper(self, fact_or_rule, counter):
-        spaces = " " * 4 * counter
-        ret = ""
-        for sup in fact_or_rule.supported_by:
-            ret = ret + spaces + "  SUPPORTED BY\n"
-            if isinstance(sup, Fact):
-                ret = ret + spaces + "fact: " + str(fact_or_rule.statement)
-                if fact_or_rule.asserted:
-                    ret = ret + "ASSERTED"
-                if len(sup.supported_by):
-                    for supp in fact_or_rule.supported_by:
-                        ret = ret + '\n' + self.kb.explain_helper(supp, counter)
-            if isinstance(sup, Rule):
-                ret = ret + spaces + "rule: " + '('
+    
+    def make_rule_line(self, rule):
+        ret = "rule: " + '('
+        for l in rule.lhs:
+            ret = ret + str(l) + ', '
+        ret = ret[:len(ret)-2]
+        ret = ret + ')' + " -> " + str(rule.rhs)
+        return ret
 
-            
+    def explain_helper(self, fact_or_rule, counter):
+        indent = "  "
+        ret = ""
+
+        for supp in fact_or_rule.supported_by:
+            ret = ret + (indent * (counter + 1)) + 'SUPPORTED BY\n'
+            for supp_fr in supp: 
+                if isinstance(supp_fr, Fact):
+                    ret = ret + (indent * (counter + 2)) + "fact: " + str(supp_fr.statement)
+                    if supp_fr.asserted:
+                        ret = ret + " ASSERTED"
+                    ret = ret + '\n'
+                elif isinstance(supp_fr, Rule):
+                    ret = ret + (indent * (counter+ 2)) + self.make_rule_line(supp_fr)
+                    if supp_fr.asserted:
+                        ret = ret + " ASSERTED"
+                    ret = ret + '\n'
+
+                ret = ret + self.explain_helper(supp_fr, counter + 2)
+
+        return ret
 
     def kb_explain(self, fact_or_rule):
         """
@@ -158,28 +172,31 @@ class KnowledgeBase(object):
         """
         ####################################################
         # Student code goes here
+        # String to return
         ret = ""
+        indent = ""
+        # If Fact
         if isinstance(fact_or_rule, Fact):
             if fact_or_rule in self.facts:
+                # Extract Fact
                 fact = self._get_fact(fact_or_rule)
-                ret = "fact: " + str(fact_or_rule.statement)
-                if fact.asserted:
-                    ret = ret + " ASSERTED"
-                if len(fact_or_rule.supported_by) > 0:
-                    pass
+                ret = ret + indent + "fact: " + str(fact_or_rule.statement) + '\n'
+                ret = ret + self.explain_helper(fact, 0)
             else:
                 ret = "Fact is not in the KB"
+        # If Rule
         elif isinstance(fact_or_rule, Rule):
             if fact_or_rule in self.rules:
                 rule = self._get_rule(fact_or_rule)
-                ret = "rule: " + '(' + fact_or_rule.lhs + ')' + " -> " + fact_or_rule.rhs
-                if rule.asserted:
-                    ret = ret + " ASSERTED"
+                ret = ret + (indent * counter) + self.make_rule_line(fact_or_rule) + '\n'
+                ret = ret + self.explain_helper(rule, 0)
             else:
                 ret = "Rule is not in the KB"
-        else: 
+        else:
             ret = False
-        return ret
+
+        return ret 
+
 class InferenceEngine(object):
     def fc_infer(self, fact, rule, kb):
         """Forward-chaining to infer new facts and rules
